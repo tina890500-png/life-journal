@@ -6,58 +6,14 @@
 <title>退休前 300 天日誌</title>
 
 <style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f5f6f7;
-  padding: 16px;
-  margin: 0;
-}
-h1, h2 {
-  text-align: center;
-}
-.card {
-  background: white;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.08);
-}
-label {
-  font-weight: bold;
-  display: block;
-  margin-top: 12px;
-}
-textarea, input[type="date"], input[type="text"] {
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 8px;
-  font-size: 16px;
-  margin-top: 6px;
-}
-button {
-  width: 100%;
-  padding: 12px;
-  font-size: 18px;
-  border-radius: 10px;
-  border: none;
-  background: #4CAF50;
-  color: white;
-  margin-top: 12px;
-}
-.item {
-  border-bottom: 1px dashed #ddd;
-  padding: 8px 0;
-}
-.log-item {
-  border-bottom: 1px solid #eee;
-  padding: 10px 0;
-  font-size: 14px;
-}
-.small {
-  font-size: 13px;
-  color: #666;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f6f7;padding:16px;margin:0}
+h1,h2{text-align:center}
+.card{background:white;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+label{font-weight:bold;display:block;margin-top:12px}
+textarea,input[type="date"],input[type="text"]{width:100%;border-radius:8px;border:1px solid #ccc;padding:8px;font-size:16px;margin-top:6px}
+button{width:100%;padding:12px;font-size:16px;border-radius:10px;border:none;background:#4CAF50;color:white;margin-top:12px}
+.item,.log{border-bottom:1px dashed #ddd;padding:8px 0;font-size:14px}
+.small{font-size:13px;color:#666}
 </style>
 </head>
 
@@ -66,177 +22,145 @@ button {
 <h1>📔 退休前 300 天日誌</h1>
 <h2 id="countdown"></h2>
 
-<!-- 每日輸入 -->
 <div class="card">
   <label>日期</label>
   <input type="date" id="date">
-
   <label>今日一句話</label>
-  <textarea id="focus" rows="2"></textarea>
-
+  <textarea id="focus"></textarea>
   <label>今天完成了什麼</label>
-  <textarea id="done" rows="3"></textarea>
-
+  <textarea id="done"></textarea>
   <label>明天只做一件事</label>
-  <textarea id="tomorrow" rows="2"></textarea>
-
+  <textarea id="tomorrow"></textarea>
   <button onclick="saveDay()">💾 儲存今日</button>
 </div>
 
-<!-- 年度規劃 -->
 <div class="card">
-  <h2>🎯 年度規劃</h2>
+  <h2>🎯 年度目標</h2>
   <div id="yearList"></div>
   <button onclick="addYear()">＋ 新增年度目標</button>
 </div>
 
-<!-- 每月規劃 -->
 <div class="card">
   <h2>🗓 每月規劃</h2>
   <div id="monthList"></div>
   <button onclick="addMonth()">＋ 新增月計畫</button>
 </div>
 
-<!-- 全部日誌 -->
 <div class="card">
-  <h2>📚 全部日誌紀錄</h2>
-  <div id="allLogs"></div>
+  <h2>📚 全部內容總覽</h2>
+  <div id="overview"></div>
 </div>
 
-<!-- 匯出 -->
 <div class="card">
-  <h2>📤 匯出全部日誌</h2>
+  <h2>📤 匯出全部內容</h2>
   <button onclick="exportTXT()">下載 / 顯示 TXT</button>
   <pre id="txtOutput" class="small"></pre>
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-/* Firebase 設定 */
-const firebaseConfig = {
-  apiKey: "AIzaSyBsmMJMO4JO3tidNwMGGWXCEwKA6Np-Kc4",
-  authDomain: "tina-life-journal.firebaseapp.com",
-  projectId: "tina-life-journal",
-  storageBucket: "tina-life-journal.firebasestorage.app",
-  messagingSenderId: "667372563944",
-  appId: "1:667372563944:web:7bef6d41638ca1ac15885d"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+/* Firebase */
+firebase.initializeApp({
+  apiKey:"AIzaSyBsmMJMO4JO3tidNwMGGWXCEwKA6Np-Kc4",
+  authDomain:"tina-life-journal.firebaseapp.com",
+  projectId:"tina-life-journal"
+});
+const db=firebase.firestore();
+
+/* DOM */
+const dateEl=document.getElementById("date");
+const focusEl=document.getElementById("focus");
+const doneEl=document.getElementById("done");
+const tomorrowEl=document.getElementById("tomorrow");
+const yearList=document.getElementById("yearList");
+const monthList=document.getElementById("monthList");
+const overview=document.getElementById("overview");
+const txtOutput=document.getElementById("txtOutput");
 
 /* 倒數 */
-const retireDate = new Date("2026-10-10");
-const today = new Date();
-countdown.innerText =
-  "距離退休還有 " + Math.ceil((retireDate - today)/(1000*60*60*24)) + " 天";
+const retireDate=new Date("2026-10-10");
+const today=new Date();
+document.getElementById("countdown").innerText=
+"距離退休還有 "+Math.ceil((retireDate-today)/(1000*60*60*24))+" 天";
+dateEl.value=today.toISOString().split("T")[0];
 
-/* 日期 */
-date.value = today.toISOString().split("T")[0];
-
-/* 儲存每日 */
+/* 每日 */
 async function saveDay(){
-  await db.collection("days").doc(date.value).set({
-    date: date.value,
-    focus: focus.value,
-    done: done.value,
-    tomorrow: tomorrow.value
+  await db.collection("days").doc(dateEl.value).set({
+    date:dateEl.value,
+    focus:focusEl.value,
+    done:doneEl.value,
+    tomorrow:tomorrowEl.value
   });
-  alert("已儲存");
+  alert("今日已儲存");
 }
 
-/* 載入單日 */
-async function loadDay(){
-  const d = await db.collection("days").doc(date.value).get();
-  if(d.exists){
-    const r = d.data();
-    focus.value = r.focus || "";
-    done.value = r.done || "";
-    tomorrow.value = r.tomorrow || "";
-  } else {
-    focus.value = done.value = tomorrow.value = "";
-  }
-}
-date.onchange = loadDay;
-loadDay();
-
-/* 年度規劃 */
-function addYear(){
-  db.collection("year").add({title:"",note:""});
-}
+/* 年度 */
+function addYear(){ db.collection("year").add({title:"",note:"",ts:Date.now()}); }
 db.collection("year").onSnapshot(s=>{
   yearList.innerHTML="";
   s.forEach(d=>{
     const r=d.data();
     yearList.innerHTML+=`
-      <div class="item">
-        <input value="${r.title}"
-          onchange="db.collection('year').doc('${d.id}').update({title:this.value})"
-          placeholder="年度目標">
-        <textarea rows="2"
-          onchange="db.collection('year').doc('${d.id}').update({note:this.value})"
-          placeholder="執行說明">${r.note}</textarea>
-        <button onclick="db.collection('year').doc('${d.id}').delete()">刪除</button>
-      </div>`;
+    <div class="item">
+      <input value="${r.title}" placeholder="年度目標"
+        onchange="db.collection('year').doc('${d.id}').update({title:this.value})">
+      <textarea onchange="db.collection('year').doc('${d.id}').update({note:this.value})"
+      placeholder="說明">${r.note||""}</textarea>
+    </div>`;
   });
 });
 
-/* 每月規劃 */
-function addMonth(){
-  db.collection("month").add({title:"",note:""});
-}
+/* 每月 */
+function addMonth(){ db.collection("month").add({title:"",note:"",ts:Date.now()}); }
 db.collection("month").onSnapshot(s=>{
   monthList.innerHTML="";
   s.forEach(d=>{
     const r=d.data();
     monthList.innerHTML+=`
-      <div class="item">
-        <input value="${r.title}"
-          onchange="db.collection('month').doc('${d.id}').update({title:this.value})"
-          placeholder="月計畫">
-        <textarea rows="2"
-          onchange="db.collection('month').doc('${d.id}').update({note:this.value})"
-          placeholder="執行說明">${r.note}</textarea>
-        <button onclick="db.collection('month').doc('${d.id}').delete()">刪除</button>
-      </div>`;
+    <div class="item">
+      <input value="${r.title}" placeholder="月計畫"
+        onchange="db.collection('month').doc('${d.id}').update({title:this.value})">
+      <textarea onchange="db.collection('month').doc('${d.id}').update({note:this.value})"
+      placeholder="說明">${r.note||""}</textarea>
+    </div>`;
   });
 });
 
-/* 顯示全部日誌 */
+/* 總覽 */
 db.collection("days").orderBy("date","desc").onSnapshot(s=>{
-  allLogs.innerHTML="";
+  overview.innerHTML="<h3>📔 日誌</h3>";
   s.forEach(d=>{
     const r=d.data();
-    allLogs.innerHTML+=`
-      <div class="log-item">
-        <b>${r.date}</b><br>
-        一句話：${r.focus||""}<br>
-        完成：${r.done||""}<br>
-        明日：${r.tomorrow||""}
-      </div>`;
+    overview.innerHTML+=`
+    <div class="log">
+      <b>${r.date}</b><br>
+      ${r.focus||""}<br>
+      完成：${r.done||""}<br>
+      明日：${r.tomorrow||""}
+    </div>`;
   });
 });
 
 /* 匯出 */
 async function exportTXT(){
   let out="";
-  const s=await db.collection("days").orderBy("date").get();
-  s.forEach(d=>{
+  (await db.collection("year").get()).forEach(d=>{
+    const r=d.data(); out+=`【年度】${r.title}\n${r.note}\n\n`;
+  });
+  (await db.collection("month").get()).forEach(d=>{
+    const r=d.data(); out+=`【每月】${r.title}\n${r.note}\n\n`;
+  });
+  (await db.collection("days").orderBy("date").get()).forEach(d=>{
     const r=d.data();
-    out+=`【${r.date}】
-一句話：${r.focus||""}
-完成：${r.done||""}
-明日：${r.tomorrow||""}
-
-`;
+    out+=`【${r.date}】\n${r.focus}\n完成：${r.done}\n明日：${r.tomorrow}\n\n`;
   });
   txtOutput.textContent=out;
-  const blob=new Blob([out],{type:"text/plain"});
   const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="退休生活日誌.txt";
+  a.href=URL.createObjectURL(new Blob([out],{type:"text/plain"}));
+  a.download="退休生活全紀錄.txt";
   a.click();
 }
 </script>
